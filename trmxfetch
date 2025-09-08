@@ -1,0 +1,156 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# Termux System Info with Gradient ASCII Banner
+
+# ===============================
+#   CONFIG
+# ===============================
+ASCII_FILE="${HOME}/trmx.ascii"
+
+# Gradient colors
+GRADIENT=(
+  "\033[38;2;167;100;21m"
+  "\033[38;2;159;86;39m"
+  "\033[38;2;151;72;55m"
+  "\033[38;2;144;59;72m"
+  "\033[38;2;137;46;89m"
+)
+RESET="\033[0m"
+
+# ===============================
+#   HELPERS
+# ===============================
+
+print_line() {
+  local color="$1" label="$2" value="$3"
+  printf "${color}>_ %-8s %s${RESET}\n" "$label:" "$value"
+}
+
+run_or_msg() {
+  # Helper: if command exists, run it, else return fallback
+  local cmd="$1" fallback="$2"
+  if command -v "$cmd" &>/dev/null; then
+    "$cmd"
+  else
+    echo "$fallback"
+  fi
+}
+
+# ===============================
+#   BATTERY & NETWORK
+# ===============================
+
+get_battery() {
+  if command -v termux-battery-status &>/dev/null; then
+    local json capacity status
+    json=$(termux-battery-status)
+    capacity=$(jq -r '.percentage' <<<"$json")
+    status=$(jq -r '.status' <<<"$json")
+    echo "${capacity}% (${status})"
+  else
+    echo "N/A (Termux:API not installed)"
+  fi
+}
+
+get_wlan_ip() {
+  if command -v termux-wifi-connectioninfo &>/dev/null; then
+    local json ip
+    json=$(termux-wifi-connectioninfo)
+    ip=$(jq -r '.ip' <<<"$json")
+    [[ -n "$ip" && "$ip" != "null" ]] && echo "$ip" || echo "Not connected"
+  else
+    echo "N/A (Termux:API not installed)"
+  fi
+}
+
+# ===============================
+#   CPU & MEMORY INFO
+# ===============================
+
+get_core_name() {
+  case "$1" in
+    d05) echo "Cortex-A55" ;;
+    d0a) echo "Cortex-A75" ;;
+    d0b) echo "Cortex-A76" ;;
+    d0c) echo "Cortex-A77" ;;
+    d0e) echo "Cortex-A78" ;;
+    d41) echo "Cortex-A710" ;;
+    d42) echo "Cortex-A510" ;;
+    d44) echo "Cortex-X2" ;;
+    d46) echo "Cortex-X3" ;;
+    d47) echo "Cortex-A715" ;;
+    d48) echo "Cortex-A510" ;;
+    d49) echo "Cortex-A720" ;;
+    d4a) echo "Cortex-A520" ;;
+    d4b) echo "Cortex-X4" ;;
+    *)   echo "Unknown (0x$1)" ;;
+  esac
+}
+
+get_cpu_summary() {
+  local cpu_arch counts summary=""
+  cpu_arch=$(getprop ro.product.cpu.abi | cut -d',' -f1)
+  counts=$(awk '/CPU part/ {print $NF}' /proc/cpuinfo | sort | uniq -c)
+
+  while read -r count hex; do
+    local name
+    name=$(get_core_name "${hex:2}")
+    [[ -z "$summary" ]] && summary="${count}x $name" || summary+=" + ${count}x $name"
+  done <<<"$counts"
+
+  echo "$summary [$cpu_arch]"
+}
+
+get_memory() {
+  echo $(awk '
+    /^MemTotal/ {total=$2}
+    /^MemAvailable/ {avail=$2}
+    END {
+        total_gb=total / (1024*1024)
+        used_gb=(total-avail) / (1024*1024)
+        printf "%.2f / %.2f GB", used_gb, total_gb
+  }' /proc/meminfo)
+}
+
+# ===============================
+#   ASCII ART
+# ===============================
+
+print_ascii() {
+  awk -v reset="$RESET" \
+      -v c0="${GRADIENT[0]}" -v c1="${GRADIENT[1]}" \
+      -v c2="${GRADIENT[2]}" -v c3="${GRADIENT[3]}" -v c4="${GRADIENT[4]}" '
+  BEGIN {
+    colors[0]=c0; colors[1]=c1; colors[2]=c2; colors[3]=c3; colors[4]=c4
+    while ((getline < ARGV[1]) > 0) total++
+    close(ARGV[1])
+    lines_per=int((total+4)/5)
+    idx=0; line_count=0
+  }
+  {
+    print colors[idx] $0 reset
+    if (++line_count >= lines_per && idx < 4) { idx++; line_count=0 }
+  }
+  ' "$ASCII_FILE"
+}
+
+# ===============================
+#   MAIN
+# ===============================
+
+main() {
+  print_ascii
+  printf "\n"
+
+  print_line "${GRADIENT[4]}" "Device" "$(getprop persist.sys.device_name) [$(getprop ro.product.marketname)]"
+  print_line "${GRADIENT[4]}" "OS"     "$(uname -o) $(getprop ro.build.version.release)"
+  print_line "${GRADIENT[3]}" "CPU"    "$(get_cpu_summary)"
+  print_line "${GRADIENT[2]}" "Memory" "$(get_memory)"
+  print_line "${GRADIENT[2]}" "Shell"  "${SHELL##*/}"
+  print_line "${GRADIENT[1]}" "Time"   "$(date +'%I:%M %p on %b %d, %Y [%A]')"
+  print_line "${GRADIENT[0]}" "Battery" "$(get_battery)"
+  print_line "${GRADIENT[0]}" "Local IP" "$(get_wlan_ip)"
+
+  printf "\n"
+}
+
+main "$@"
