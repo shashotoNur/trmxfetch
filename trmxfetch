@@ -66,38 +66,24 @@ get_wlan_ip() {
 #   CPU & MEMORY INFO
 # ===============================
 
-get_core_name() {
-  case "$1" in
-    d05) echo "Cortex-A55" ;;
-    d0a) echo "Cortex-A75" ;;
-    d0b) echo "Cortex-A76" ;;
-    d0c) echo "Cortex-A77" ;;
-    d0e) echo "Cortex-A78" ;;
-    d41) echo "Cortex-A710" ;;
-    d42) echo "Cortex-A510" ;;
-    d44) echo "Cortex-X2" ;;
-    d46) echo "Cortex-X3" ;;
-    d47) echo "Cortex-A715" ;;
-    d48) echo "Cortex-A510" ;;
-    d49) echo "Cortex-A720" ;;
-    d4a) echo "Cortex-A520" ;;
-    d4b) echo "Cortex-X4" ;;
-    *)   echo "Unknown (0x$1)" ;;
-  esac
-}
+get_cpu() {
+  local cpu_arch cpu_core=""
+  cpu_arch=$(lscpu | awk -F: '/Architecture/ {gsub(/^[ \t]+/, "", $2); print $2}')
 
-get_cpu_summary() {
-  local cpu_arch counts summary=""
-  cpu_arch=$(getprop ro.product.cpu.abi | cut -d',' -f1)
-  counts=$(awk '/CPU part/ {print $NF}' /proc/cpuinfo | sort | uniq -c)
+  # Parse blocks of Model name + Core(s) per socket
+  cpu_core=$(awk -F: '
+    /Model name:/ {
+      gsub(/^[ \t]+/, "", $2);
+      name=$2
+    }
+    /Core\(s\) per socket:/ {
+      gsub(/^[ \t]+/, "", $2);
+      cores=$2
+      print cores "x " name
+    }
+  ' < <(lscpu) | tr '\n' ',' | sed 's/,$//' | sed 's/,/, /g')
 
-  while read -r count hex; do
-    local name
-    name=$(get_core_name "${hex:2}")
-    [[ -z "$summary" ]] && summary="${count}x $name" || summary+=" + ${count}x $name"
-  done <<<"$counts"
-
-  echo "$summary [$cpu_arch]"
+  echo "$cpu_core [$cpu_arch]"
 }
 
 get_memory() {
@@ -143,7 +129,7 @@ main() {
 
   print_line "${GRADIENT[4]}" "Device" "$(getprop persist.sys.device_name) [$(getprop ro.product.marketname)]"
   print_line "${GRADIENT[4]}" "OS"     "$(uname -o) $(getprop ro.build.version.release)"
-  print_line "${GRADIENT[3]}" "CPU"    "$(get_cpu_summary)"
+  print_line "${GRADIENT[3]}" "CPU"    "$(get_cpu)"
   print_line "${GRADIENT[2]}" "Memory" "$(get_memory)"
   print_line "${GRADIENT[2]}" "Shell"  "${SHELL##*/}"
   print_line "${GRADIENT[1]}" "Time"   "$(date +'%I:%M %p on %b %d, %Y [%A]')"
