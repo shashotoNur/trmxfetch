@@ -4,7 +4,8 @@
 # ===============================
 #   CONFIG
 # ===============================
-ASCII_FILE="${HOME}/trmx.ascii"
+SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+ASCII_FILE="${SCRIPT_DIR}/trmx.ascii"
 
 # Gradient colors
 GRADIENT=(

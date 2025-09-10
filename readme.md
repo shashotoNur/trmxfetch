@@ -42,18 +42,18 @@ Copy both files to your home directory:
 
 ```sh
 cd trmxfetch
-cp trmxfetch trmx.ascii ~/
-chmod +x ~/trmxfetch
+chmod +x trmxfetch
+cp trmxfetch trmx.ascii ~/.local/bin
 ```
 
 ---
 
 ## Usage
 
-To run the script automatically at the start of each Termux session, add it to your shell rc file (`.bashrc`, `.zshrc`, etc.):
+To run the script automatically at the start of each Termux session, add it to your shell rc file (`.bashrc`, `.zshrc`, etc.), e.g.:
 
 ```sh
-echo "~/trmxfetch" >> ~/.zshrc
+echo "trmxfetch" >> ~/.zshrc
 ```
 
 Open a new session to see the output.
