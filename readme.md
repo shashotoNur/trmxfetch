@@ -43,7 +43,7 @@ Copy both files to your home directory:
 ```sh
 cd trmxfetch
 chmod +x trmxfetch
-cp trmxfetch trmx.ascii ~/.local/bin
+cp -f trmxfetch trmx.ascii ~/.local/bin
 ```
 
 ---
@@ -58,11 +58,19 @@ echo "trmxfetch" >> ~/.zshrc
 
 Open a new session to see the output.
 
+The script accepts an optional -t argument for setting a timeout and a -h or --help flag for a usage message:
+
+```sh
+# Set a 5-second timeout for the script to finish
+trmxfetch -t 5
+```
+
 ---
 
 ## Features
 
 * Gradient-colored ASCII art (`trmx.ascii` is user-replaceable)
+* Accepts execution timeout as argument to avoid delay
 * Device and OS information
 * CPU model and architecture summary
 * Shell information
