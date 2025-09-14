@@ -9,11 +9,11 @@ ASCII_FILE="${SCRIPT_DIR}/trmx.ascii"
 
 # Gradient colors
 GRADIENT=(
-    "\033[38;2;167;100;21m"
-    "\033[38;2;159;86;39m"
-    "\033[38;2;151;72;55m"
-    "\033[38;2;144;59;72m"
-    "\033[38;2;137;46;89m"
+    "\033[38;2;173;216;230m" # Light Blue
+    "\033[38;2;135;206;250m" # Lighter Sky Blue
+    "\033[38;2;100;149;237m" # Cornflower Blue
+    "\033[38;2;65;105;225m"  # Royal Blue
+    "\033[38;2;30;70;180m"   # Darker Royal Blue
 )
 RESET="\033[0m"
 
