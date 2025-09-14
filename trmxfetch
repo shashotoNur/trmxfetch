@@ -134,9 +134,10 @@ main() {
   print_line "${GRADIENT[2]}" "Memory" "$(get_memory)"
   print_line "${GRADIENT[2]}" "Shell"  "${SHELL##*/}"
   print_line "${GRADIENT[1]}" "Time"   "$(date +'%I:%M %p on %b %d, %Y [%A]')"
-  print_line "${GRADIENT[0]}" "Battery" "$(get_battery)"
+  print_line "${GRADIENT[0]}" "Battery" "$(get_battery)" & \
   print_line "${GRADIENT[0]}" "Local IP" "$(get_wlan_ip)"
 
+  wait
   printf "\n"
 }
 
